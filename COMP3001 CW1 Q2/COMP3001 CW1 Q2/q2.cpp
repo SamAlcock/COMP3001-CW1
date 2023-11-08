@@ -51,7 +51,7 @@ int main() {
 		printf("\nCorrect Result\n");
 	else
 		printf("\nINcorrect Result\n");
-	float FLOPS = (12 * N ^ 2 + 2 * N);
+	float FLOPS = (12 * N * N + 2 * N);
 	printf("\n%f FLOPS achieved\n", FLOPS);
 	system("pause"); //this command does not let the output window to close
 	
@@ -133,31 +133,31 @@ void slow_routine(float alpha, float beta) {
 		_mm256_fmadd_ps(ymm0, ymm3, ymm0); // multiply ymm0 and ymm3, store results into ymm0
 		ymm2 = _mm256_add_ps(ymm1, ymm0); // add ymm1 and ymm0, store results into ymm2
 		_mm256_store_ps(&x[i], ymm2); // store values of ymm2 into x[]
-
-
-	__m256 zmm0, zmm1, zmm2, zmm3, zmm4, zmm5, zmm6, znum;
-	float temp[8];
-	zmm0 = _mm256_set_ps(alpha, alpha, alpha, alpha, alpha, alpha, alpha, alpha); // set num values
-	zmm1 = _mm256_set_ps(beta, beta, beta, beta, beta, beta, beta, beta);
-	znum = _mm256_setzero_ps();
-	for (i = 0; i < N; i++)
-		zmm5 = _mm256_setzero_ps();
-		zmm6 = _mm256_setzero_ps();
-		for (j = 0; j < N; j += 8)
-			zmm2 = _mm256_load_ps(&A[i][j]); // load 8 elements of A[][]
-			zmm3 = _mm256_load_ps(&x[j]); // load 8 elements of x[]
-			_mm256_fmadd_ps(zmm0, zmm2, znum); // multiply zmm0 (alpha) and zmm2 (A[][]), store results in znum
-			_mm256_fmadd_ps(znum, zmm3, znum); // multiply znum (alpha * A[][]) and zmm3 (x[]), store results into znum
-			zmm5 = _mm256_add_ps(znum, zmm1); // add znum (alpha * A[][] * x[]) and zmm1 (beta), store results into zmm5
-			zmm6 = _mm256_add_ps(zmm5, zmm6); // add zmm5 (alpha * A[][] * x[] + beta) and zmm6 (acts as total), store results into zmm6
-			// w[i] += alpha * A[i][j] * x[j] + beta;
-			
-		zmm6 = _mm256_hadd_ps(zmm6, zmm6); // pack zmm6 into one value for total
-		zmm6 = _mm256_hadd_ps(zmm6, zmm6);
-		_mm256_storeu_ps(temp, zmm6);
-		w[i] += temp[0];
-			
-
+	
+	__m256 zmm0, zmm1, zmm2, zmm3, zmmalpha, zmmbeta;
+	__m128 total;
+	for (i = 0; i < N; i++) {
+		zmm0 = _mm256_set1_ps(w[i]); // 8 copies of w[i]
+		zmm3 = _mm256_setzero_ps();
+		zmmalpha = _mm256_set1_ps(alpha); // 8 copies of alpha
+		zmmbeta = _mm256_set1_ps(beta); //8 copies of beta
+		for (j = 0; j < N; j += 8) {
+			zmm1 = _mm256_load_ps(&A[i][j]);
+			zmm2 = _mm256_load_ps(&x[j]);
+			zmm1 = _mm256_mul_ps(zmm1, zmm2); // A[][] * x[]
+			zmm1 = _mm256_mul_ps(zmm1, zmmalpha); // (A[][] * x[]) * alpha
+			zmm1 = _mm256_add_ps(zmm1, zmmbeta); // ((A[][] * x[]) * alpha) + beta
+			zmm3 = _mm256_add_ps(zmm3, zmm1);
+		}
+		
+		zmm0 = _mm256_permute2f128_ps(zmm3, zmm3, 1);
+		zmm3 = _mm256_add_ps(zmm3, zmm0);
+		zmm3 = _mm256_hadd_ps(zmm3, zmm3); // pack zmm1 into one value for total
+		zmm3 = _mm256_hadd_ps(zmm3, zmm3);
+		total = _mm256_extractf128_ps(zmm3, 0); // extract packed zmm1
+		_mm_store_ss(&w[i], total); // store total into w[i]
+	}
+		
 
 }
 
