@@ -111,11 +111,30 @@ void initialize_again() {
 void slow_routine(float alpha, float beta) {
 
 	unsigned int i, j;
+
+	__m256 wmm0, wmm1, wmm2, wmm3, wmm4, wmm5, wmm6, wmmalpha;
 	
-	//transpose this
-	for (i = 0; i < N; i++)
-		for (j = 0; j < N; j++)
-			A[i][j] += alpha * u1[i] * v1[j] + u2[i] * v2[j];
+	for (i = 0; i < N; i++) {
+		wmmalpha = _mm256_set1_ps(alpha); // 8 copies of alpha
+		wmm0 = _mm256_set1_ps(u1[i]); // 8 copies of u1[i]
+		wmm1 = _mm256_set1_ps(u2[i]); // 8 copies of u2[i]
+		wmm5 = _mm256_mul_ps(wmmalpha, wmm0); // alpha * u1[i]
+		for (j = 0; j < N; j += 8) {
+			wmm2 = _mm256_load_ps(&A[i][j]); // load 8 elements of A[i][]
+			wmm3 = _mm256_load_ps(&v1[j]); // load 8 elements of v1[]
+			wmm4 = _mm256_load_ps(&v2[j]); // load 8 elements of v2[]
+			wmm3 = _mm256_mul_ps(wmm3, wmm5); // v1[] * (alpha * u1[i])
+			wmm1 = _mm256_mul_ps(wmm1, wmm4); // u2[i] * v2[]
+			wmm3 = _mm256_add_ps(wmm3, wmm1); // ((alpha * u1[i]) * v1[]) + (u2[i] * v2[])
+			wmm2 = _mm256_add_ps(wmm2, wmm3); // A[][] + (((alpha * u1[i]) * v1[]) + (u2[i] * v2[]))
+
+			_mm256_store_ps(&A[i][j], wmm2);
+
+			// A[i][j] += alpha * u1[i] * v1[j] + u2[i] * v2[j];
+			// A[i][j] = A[i][j] + alpha * u1[i] * v1[j] + u2[i] * v2[j] 
+		}	
+	}
+		
 
 	// transpose this
 	for (i = 0; i < N; i++)
