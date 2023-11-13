@@ -112,6 +112,7 @@ void slow_routine(float alpha, float beta) {
 
 	unsigned int i, j;
 
+	/*
 	__m256 wmm0, wmm1, wmm2, wmm3, wmm4, wmm5, wmm6, wmmalpha;
 	
 	for (i = 0; i < N; i++) {
@@ -132,14 +133,37 @@ void slow_routine(float alpha, float beta) {
 
 			// A[i][j] += alpha * u1[i] * v1[j] + u2[i] * v2[j];
 			// A[i][j] = A[i][j] + alpha * u1[i] * v1[j] + u2[i] * v2[j] 
-		}	
+		}
 	}
-		
+	*/
 
-	// transpose this
+
+
 	for (i = 0; i < N; i++)
 		for (j = 0; j < N; j++)
-			x[i] += A[j][i] * y[j] + beta;
+			A[i][j] += alpha * u1[i] * v1[j] + u2[i] * v2[j];
+
+	
+	__m256 xmm0, xmm1, xmm2, xmm3, xmmbeta;
+
+	xmmbeta = _mm256_set1_ps(beta);
+
+	for (j = 0; j < N; j++) {
+		xmm0 = _mm256_set1_ps(y[j]);
+		for (i = 0; i < N; i+=8) {
+			xmm1 = _mm256_load_ps(&x[i]);
+			xmm2 = _mm256_load_ps(&A[j][i]);
+
+			xmm3 = _mm256_mul_ps(xmm2, xmm0);
+			xmm3 = _mm256_add_ps(xmm3, xmmbeta);
+			xmm3 = _mm256_add_ps(xmm3, xmm1);
+
+			_mm256_store_ps(&x[i], xmm3);
+
+
+		}
+	}
+		
 
 
 	// Need to add loop for extra iterations (e.g., if N = 10 need to account for the 2 extra iterations)
