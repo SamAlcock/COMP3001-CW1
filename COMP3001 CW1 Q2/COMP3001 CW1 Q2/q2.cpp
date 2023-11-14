@@ -110,7 +110,7 @@ void initialize_again() {
 //you will optimize this routine
 void slow_routine(float alpha, float beta) {
 
-	// Optimisations applied - vectorisation, loop interchange, loop merge
+	// Optimisations applied - vectorisation, loop interchange, loop merge, register blocking
 
 	unsigned int i, j;
 
@@ -216,13 +216,13 @@ void slow_routine(float alpha, float beta) {
 	
 
 	
-	__m256 xmm0, xmm1, xmm2, xmm3, xmmbeta;
+	__m256 xmm0, xmm1, xmm2, xmm3, xmm3i1, xmmbeta;
 
 	xmmbeta = _mm256_set1_ps(beta); // load 8 copies of beta
 
 	for (j = 0; j < N; j++) {
 		xmm0 = _mm256_set1_ps(y[j]); // load 8 copies of y[]
-		for (i = 0; i < N; i+=8) {
+		for (i = 0; i < N; i+=16) {
 			xmm1 = _mm256_load_ps(&x[i]); // load 8 elements of x[]
 			xmm2 = _mm256_load_ps(&A[j][i]); // load 8 elements of A[j][]
 
@@ -230,7 +230,17 @@ void slow_routine(float alpha, float beta) {
 			xmm3 = _mm256_add_ps(xmm3, xmmbeta); // (A[][] * y[j]) + beta
 			xmm3 = _mm256_add_ps(xmm3, xmm1); // ((A[][] * y[j]) + beta) + x[]
 
+			// i + 8
+			xmm1 = _mm256_load_ps(&x[i + 8]); 
+			xmm2 = _mm256_load_ps(&A[j][i + 8]); 
+			xmm3i1 = _mm256_mul_ps(xmm2, xmm0); 
+			xmm3i1 = _mm256_add_ps(xmm3i1, xmmbeta); 
+			xmm3i1 = _mm256_add_ps(xmm3i1, xmm1);
+
+
+
 			_mm256_store_ps(&x[i], xmm3); // store xmm3 into x[]
+			_mm256_store_ps(&x[i + 8], xmm3i1); 
 
 
 		}
