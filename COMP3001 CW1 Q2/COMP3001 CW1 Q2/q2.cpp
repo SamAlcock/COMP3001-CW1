@@ -163,16 +163,17 @@ void slow_routine(float alpha, float beta) {
 	__m256 ymm0, ymm1, ymm2, ymm3;
 	ymm0 = _mm256_set_ps(3.22f, 3.22f, 3.22f, 3.22f, 3.22f, 3.22f, 3.22f, 3.22f); // set num values
 
-	for (i = 0; i < N; i += 8)
+		
+	
+	__m256 zmm0, zmm1, zmm2, zmm3, zmmalpha, zmmbeta;
+	__m128 total;
+	for (i = 0; i < N; i++) {
 		ymm3 = _mm256_load_ps(&z[i]); // load 8 elements of z[]
 		ymm1 = _mm256_load_ps(&x[i]); // load 8 elements of x[]
 		_mm256_fmadd_ps(ymm0, ymm3, ymm0); // multiply ymm0 and ymm3, store results into ymm0
 		ymm2 = _mm256_add_ps(ymm1, ymm0); // add ymm1 and ymm0, store results into ymm2
 		_mm256_store_ps(&x[i], ymm2); // store values of ymm2 into x[]
-	
-	__m256 zmm0, zmm1, zmm2, zmm3, zmmalpha, zmmbeta;
-	__m128 total;
-	for (i = 0; i < N; i++) {
+
 		zmm0 = _mm256_set1_ps(w[i]); // 8 copies of w[i]
 		zmm3 = _mm256_setzero_ps();
 		zmmalpha = _mm256_set1_ps(alpha); // 8 copies of alpha
