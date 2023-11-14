@@ -112,53 +112,46 @@ void slow_routine(float alpha, float beta) {
 
 	unsigned int i, j;
 
-	/*
-	__m256 wmm0, wmm1, wmm2, wmm3, wmm4, wmm5, wmm6, wmmalpha;
 	
+	__m256 wmm0, wmm1, wmm2, wmm3, wmm4, wmm5, wmm6, wmmalpha;
+	wmmalpha = _mm256_set1_ps(alpha); // 8 copies of alpha
 	for (i = 0; i < N; i++) {
-		wmmalpha = _mm256_set1_ps(alpha); // 8 copies of alpha
-		wmm0 = _mm256_set1_ps(u1[i]); // 8 copies of u1[i]
-		wmm1 = _mm256_set1_ps(u2[i]); // 8 copies of u2[i]
-		wmm5 = _mm256_mul_ps(wmmalpha, wmm0); // alpha * u1[i]
 		for (j = 0; j < N; j += 8) {
+			wmm0 = _mm256_set1_ps(u1[i]); // 8 copies of u1[i]
+			wmm1 = _mm256_set1_ps(u2[i]); // 8 copies of u2[i]
+			wmm5 = _mm256_mul_ps(wmmalpha, wmm0); // alpha * u1[i]
 			wmm2 = _mm256_load_ps(&A[i][j]); // load 8 elements of A[i][]
 			wmm3 = _mm256_load_ps(&v1[j]); // load 8 elements of v1[]
 			wmm4 = _mm256_load_ps(&v2[j]); // load 8 elements of v2[]
 			wmm3 = _mm256_mul_ps(wmm3, wmm5); // v1[] * (alpha * u1[i])
 			wmm1 = _mm256_mul_ps(wmm1, wmm4); // u2[i] * v2[]
 			wmm3 = _mm256_add_ps(wmm3, wmm1); // ((alpha * u1[i]) * v1[]) + (u2[i] * v2[])
-			wmm2 = _mm256_add_ps(wmm2, wmm3); // A[][] + (((alpha * u1[i]) * v1[]) + (u2[i] * v2[]))
+			wmm3 = _mm256_add_ps(wmm2, wmm3); // A[][] + (((alpha * u1[i]) * v1[]) + (u2[i] * v2[]))
 
-			_mm256_store_ps(&A[i][j], wmm2);
+			_mm256_store_ps(&A[i][j], wmm3);
 
 			// A[i][j] += alpha * u1[i] * v1[j] + u2[i] * v2[j];
 			// A[i][j] = A[i][j] + alpha * u1[i] * v1[j] + u2[i] * v2[j] 
 		}
 	}
-	*/
-
-
-
-	for (i = 0; i < N; i++)
-		for (j = 0; j < N; j++)
-			A[i][j] += alpha * u1[i] * v1[j] + u2[i] * v2[j];
+	
 
 	
 	__m256 xmm0, xmm1, xmm2, xmm3, xmmbeta;
 
-	xmmbeta = _mm256_set1_ps(beta);
+	xmmbeta = _mm256_set1_ps(beta); // load 8 copies of beta
 
 	for (j = 0; j < N; j++) {
-		xmm0 = _mm256_set1_ps(y[j]);
+		xmm0 = _mm256_set1_ps(y[j]); // load 8 copies of y[]
 		for (i = 0; i < N; i+=8) {
-			xmm1 = _mm256_load_ps(&x[i]);
-			xmm2 = _mm256_load_ps(&A[j][i]);
+			xmm1 = _mm256_load_ps(&x[i]); // load 8 elements of x[]
+			xmm2 = _mm256_load_ps(&A[j][i]); // load 8 elements of A[j][]
 
-			xmm3 = _mm256_mul_ps(xmm2, xmm0);
-			xmm3 = _mm256_add_ps(xmm3, xmmbeta);
-			xmm3 = _mm256_add_ps(xmm3, xmm1);
+			xmm3 = _mm256_mul_ps(xmm2, xmm0); // A[][] * y[j]
+			xmm3 = _mm256_add_ps(xmm3, xmmbeta); // (A[][] * y[j]) + beta
+			xmm3 = _mm256_add_ps(xmm3, xmm1); // ((A[][] * y[j]) + beta) + x[]
 
-			_mm256_store_ps(&x[i], xmm3);
+			_mm256_store_ps(&x[i], xmm3); // store xmm3 into x[]
 
 
 		}
