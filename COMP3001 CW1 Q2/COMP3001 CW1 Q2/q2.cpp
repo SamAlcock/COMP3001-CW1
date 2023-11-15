@@ -113,103 +113,105 @@ void slow_routine(float alpha, float beta) {
 	// Optimisations applied - vectorisation, loop interchange, loop merge, register blocking
 
 	unsigned int i, j;
+	__m256 mmalpha = _mm256_set1_ps(alpha);
+	__m256 mmbeta = _mm256_set1_ps(beta);
 
 	
-	__m256 wmm0, wmm0i1, wmm0i2, wmm0i3, wmm0i4, wmm0i5, wmm0i6, wmm0i7, wmm1, wmm1i1, wmm1i2, wmm1i3, wmm1i4, wmm1i5, wmm1i6, wmm1i7, wmm2, wmm3, wmm4, wmm5, wmm6, wmm6i1, wmm6i2, wmm6i3, wmm6i4, wmm6i5, wmm6i6, wmm6i7, wmm7, wmm8, wmm9, wmmalpha;
-	wmmalpha = _mm256_set1_ps(alpha); // 8 copies of alpha
-	for (i = 0; i < (N/8)*8; i += 8) {
+	__m256 wmm0, wmm0i1, wmm0i2, wmm0i3, wmm0i4, wmm0i5, wmm0i6, wmm0i7, wmm1, wmm1i1, wmm1i2, wmm1i3, wmm1i4, wmm1i5, wmm1i6, wmm1i7, wmm2, wmm3, wmm4, wmm5, wmm6, wmm6i1, wmm6i2, wmm6i3, wmm6i4, wmm6i5, wmm6i6, wmm6i7, wmm7, wmm8, wmm9;
+
+	for (i = 0; i < (N / 8) * 8; i += 8) {
 		wmm0 = _mm256_set1_ps(u1[i]); // 8 copies of u1[i]
 		wmm1 = _mm256_set1_ps(u2[i]); // 8 copies of u2[i]	
 
 		wmm0i1 = _mm256_set1_ps(u1[i + 1]);
 		wmm1i1 = _mm256_set1_ps(u2[i + 1]);
-		
+
 		wmm0i2 = _mm256_set1_ps(u1[i + 2]);
 		wmm1i2 = _mm256_set1_ps(u2[i + 2]);
-		
+
 		wmm0i3 = _mm256_set1_ps(u1[i + 3]);
 		wmm1i3 = _mm256_set1_ps(u2[i + 3]);
-		
+
 		wmm0i4 = _mm256_set1_ps(u1[i + 4]);
 		wmm1i4 = _mm256_set1_ps(u2[i + 4]);
-		
+
 		wmm0i5 = _mm256_set1_ps(u1[i + 5]);
 		wmm1i5 = _mm256_set1_ps(u2[i + 5]);
-		
+
 		wmm0i6 = _mm256_set1_ps(u1[i + 6]);
 		wmm1i6 = _mm256_set1_ps(u2[i + 6]);
-		
+
 		wmm0i7 = _mm256_set1_ps(u1[i + 7]);
 		wmm1i7 = _mm256_set1_ps(u2[i + 7]);
 		for (j = 0; j < N; j += 8) {
-			
+
 			wmm2 = _mm256_load_ps(&A[i][j]); // load 8 elements of A[i][]
 			wmm3 = _mm256_load_ps(&v1[j]); // load 8 elements of v1[]
 			wmm4 = _mm256_load_ps(&v2[j]); // load 8 elements of v2[]
-			wmm5 = _mm256_mul_ps(wmmalpha, wmm0); // alpha * u1[i]
+			wmm5 = _mm256_mul_ps(mmalpha, wmm0); // alpha * u1[i]
 			wmm7 = _mm256_mul_ps(wmm3, wmm5); // v1[] * (alpha * u1[i])
 			wmm8 = _mm256_mul_ps(wmm1, wmm4); // u2[i] * v2[]
 			wmm9 = _mm256_add_ps(wmm7, wmm8); // ((alpha * u1[i]) * v1[]) + (u2[i] * v2[])
 			wmm6 = _mm256_add_ps(wmm2, wmm9); // A[][] + (((alpha * u1[i]) * v1[]) + (u2[i] * v2[]))
 
 			// i + 1
-			
+
 			wmm2 = _mm256_load_ps(&A[i + 1][j]);
-			wmm5 = _mm256_mul_ps(wmmalpha, wmm0i1);
+			wmm5 = _mm256_mul_ps(mmalpha, wmm0i1);
 			wmm7 = _mm256_mul_ps(wmm3, wmm5);
 			wmm8 = _mm256_mul_ps(wmm1i1, wmm4);
 			wmm9 = _mm256_add_ps(wmm7, wmm8);
 			wmm6i1 = _mm256_add_ps(wmm2, wmm9);
 
 			// i + 2
-			
+
 			wmm2 = _mm256_load_ps(&A[i + 2][j]);
-			wmm5 = _mm256_mul_ps(wmmalpha, wmm0i2);
+			wmm5 = _mm256_mul_ps(mmalpha, wmm0i2);
 			wmm7 = _mm256_mul_ps(wmm3, wmm5);
 			wmm8 = _mm256_mul_ps(wmm1i2, wmm4);
 			wmm9 = _mm256_add_ps(wmm7, wmm8);
 			wmm6i2 = _mm256_add_ps(wmm2, wmm9);
 
 			// i + 3
-			
+
 			wmm2 = _mm256_load_ps(&A[i + 3][j]);
-			wmm5 = _mm256_mul_ps(wmmalpha, wmm0i3);
+			wmm5 = _mm256_mul_ps(mmalpha, wmm0i3);
 			wmm7 = _mm256_mul_ps(wmm3, wmm5);
 			wmm8 = _mm256_mul_ps(wmm1i3, wmm4);
 			wmm9 = _mm256_add_ps(wmm7, wmm8);
 			wmm6i3 = _mm256_add_ps(wmm2, wmm9);
 
 			// i + 4
-			
+
 			wmm2 = _mm256_load_ps(&A[i + 4][j]);
-			wmm5 = _mm256_mul_ps(wmmalpha, wmm0i4);
+			wmm5 = _mm256_mul_ps(mmalpha, wmm0i4);
 			wmm7 = _mm256_mul_ps(wmm3, wmm5);
 			wmm8 = _mm256_mul_ps(wmm1i4, wmm4);
 			wmm9 = _mm256_add_ps(wmm7, wmm8);
 			wmm6i4 = _mm256_add_ps(wmm2, wmm9);
 
 			// i + 5
-			
+
 			wmm2 = _mm256_load_ps(&A[i + 5][j]);
-			wmm5 = _mm256_mul_ps(wmmalpha, wmm0i5);
+			wmm5 = _mm256_mul_ps(mmalpha, wmm0i5);
 			wmm7 = _mm256_mul_ps(wmm3, wmm5);
 			wmm8 = _mm256_mul_ps(wmm1i5, wmm4);
 			wmm9 = _mm256_add_ps(wmm7, wmm8);
 			wmm6i5 = _mm256_add_ps(wmm2, wmm9);
 
 			// i + 6
-			
+
 			wmm2 = _mm256_load_ps(&A[i + 6][j]);
-			wmm5 = _mm256_mul_ps(wmmalpha, wmm0i6);
+			wmm5 = _mm256_mul_ps(mmalpha, wmm0i6);
 			wmm7 = _mm256_mul_ps(wmm3, wmm5);
 			wmm8 = _mm256_mul_ps(wmm1i6, wmm4);
 			wmm9 = _mm256_add_ps(wmm7, wmm8);
 			wmm6i6 = _mm256_add_ps(wmm2, wmm9);
 
 			// i + 7
-			
+
 			wmm2 = _mm256_load_ps(&A[i + 7][j]);
-			wmm5 = _mm256_mul_ps(wmmalpha, wmm0i7);
+			wmm5 = _mm256_mul_ps(mmalpha, wmm0i7);
 			wmm7 = _mm256_mul_ps(wmm3, wmm5);
 			wmm8 = _mm256_mul_ps(wmm1i7, wmm4);
 			wmm9 = _mm256_add_ps(wmm7, wmm8);
@@ -228,6 +230,7 @@ void slow_routine(float alpha, float beta) {
 			// A[i][j] += alpha * u1[i] * v1[j] + u2[i] * v2[j];
 		}
 	}
+	
 
 	// Padding code
 	for (i = (N / 8) * 8; i < N; i++) {
@@ -238,9 +241,8 @@ void slow_routine(float alpha, float beta) {
 	
 
 	
-	__m256 xmm0, xmm1, xmm2, xmm3, xmm3i8, xmm3i16, xmm3i24, xmm3i32, xmm3i40, xmm3i48, xmm3i56, xmmbeta;
+	__m256 xmm0, xmm1, xmm2, xmm3, xmm3i8, xmm3i16, xmm3i24, xmm3i32, xmm3i40, xmm3i48, xmm3i56;
 
-	xmmbeta = _mm256_set1_ps(beta); // load 8 copies of beta
 
 	for (j = 0; j < N; j++) {
 		xmm0 = _mm256_set1_ps(y[j]); // load 8 copies of y[]
@@ -249,56 +251,56 @@ void slow_routine(float alpha, float beta) {
 			xmm2 = _mm256_load_ps(&A[j][i]); // load 8 elements of A[j][]
 
 			xmm3 = _mm256_mul_ps(xmm2, xmm0); // A[][] * y[j]
-			xmm3 = _mm256_add_ps(xmm3, xmmbeta); // (A[][] * y[j]) + beta
+			xmm3 = _mm256_add_ps(xmm3, mmbeta); // (A[][] * y[j]) + beta
 			xmm3 = _mm256_add_ps(xmm3, xmm1); // ((A[][] * y[j]) + beta) + x[]
 
 			// i + 8
 			xmm1 = _mm256_load_ps(&x[i + 8]);
 			xmm2 = _mm256_load_ps(&A[j][i + 8]);
 			xmm3i8 = _mm256_mul_ps(xmm2, xmm0);
-			xmm3i8 = _mm256_add_ps(xmm3i8, xmmbeta);
+			xmm3i8 = _mm256_add_ps(xmm3i8, mmbeta);
 			xmm3i8 = _mm256_add_ps(xmm3i8, xmm1);
 
 			// i + 16
 			xmm1 = _mm256_load_ps(&x[i + 16]);
 			xmm2 = _mm256_load_ps(&A[j][i + 16]);
 			xmm3i16 = _mm256_mul_ps(xmm2, xmm0);
-			xmm3i16 = _mm256_add_ps(xmm3i16, xmmbeta);
+			xmm3i16 = _mm256_add_ps(xmm3i16, mmbeta);
 			xmm3i16 = _mm256_add_ps(xmm3i16, xmm1);
 
 			// i + 24
 			xmm1 = _mm256_load_ps(&x[i + 24]);
 			xmm2 = _mm256_load_ps(&A[j][i + 24]);
 			xmm3i24 = _mm256_mul_ps(xmm2, xmm0);
-			xmm3i24 = _mm256_add_ps(xmm3i24, xmmbeta);
+			xmm3i24 = _mm256_add_ps(xmm3i24, mmbeta);
 			xmm3i24 = _mm256_add_ps(xmm3i24, xmm1);
 
 			// i + 32
 			xmm1 = _mm256_load_ps(&x[i + 32]);
 			xmm2 = _mm256_load_ps(&A[j][i + 32]);
 			xmm3i32 = _mm256_mul_ps(xmm2, xmm0);
-			xmm3i32 = _mm256_add_ps(xmm3i32, xmmbeta);
+			xmm3i32 = _mm256_add_ps(xmm3i32, mmbeta);
 			xmm3i32 = _mm256_add_ps(xmm3i32, xmm1);
 
 			// i + 40
 			xmm1 = _mm256_load_ps(&x[i + 40]);
 			xmm2 = _mm256_load_ps(&A[j][i + 40]);
 			xmm3i40 = _mm256_mul_ps(xmm2, xmm0);
-			xmm3i40 = _mm256_add_ps(xmm3i40, xmmbeta);
+			xmm3i40 = _mm256_add_ps(xmm3i40, mmbeta);
 			xmm3i40 = _mm256_add_ps(xmm3i40, xmm1);
 
 			// i + 48
 			xmm1 = _mm256_load_ps(&x[i + 48]);
 			xmm2 = _mm256_load_ps(&A[j][i + 48]);
 			xmm3i48 = _mm256_mul_ps(xmm2, xmm0);
-			xmm3i48 = _mm256_add_ps(xmm3i48, xmmbeta);
+			xmm3i48 = _mm256_add_ps(xmm3i48, mmbeta);
 			xmm3i48 = _mm256_add_ps(xmm3i48, xmm1);
 
 			// i + 56
 			xmm1 = _mm256_load_ps(&x[i + 56]);
 			xmm2 = _mm256_load_ps(&A[j][i + 56]);
 			xmm3i56 = _mm256_mul_ps(xmm2, xmm0);
-			xmm3i56 = _mm256_add_ps(xmm3i56, xmmbeta);
+			xmm3i56 = _mm256_add_ps(xmm3i56, mmbeta);
 			xmm3i56 = _mm256_add_ps(xmm3i56, xmm1);
 
 
@@ -328,11 +330,10 @@ void slow_routine(float alpha, float beta) {
 	__m256 ymm0, ymm1, ymm2, ymm3;
 	ymm0 = _mm256_set1_ps(3.22f); // set num values
 
-	__m256 zmm0, zmm0i1, zmm0i2, zmm0i3, zmm0i4, zmm0i5, zmm0i6, zmm0i7, zmm1, zmm2, zmm3, zmm3i1, zmm3i2, zmm3i3, zmm3i4, zmm3i5, zmm3i6, zmm3i7, zmmalpha, zmmbeta;
+	__m256 zmm0, zmm0i1, zmm0i2, zmm0i3, zmm0i4, zmm0i5, zmm0i6, zmm0i7, zmm1, zmm2, zmm3, zmm3i1, zmm3i2, zmm3i3, zmm3i4, zmm3i5, zmm3i6, zmm3i7;
 	__m128 total;
 
-	zmmalpha = _mm256_set1_ps(alpha); // 8 copies of alpha
-	zmmbeta = _mm256_set1_ps(beta); //8 copies of beta
+
 
 	for (i = 0; i < (N/8)*8; i+=8) {
 		
@@ -420,57 +421,57 @@ void slow_routine(float alpha, float beta) {
 			zmm1 = _mm256_load_ps(&A[i][j]);
 			zmm2 = _mm256_load_ps(&x[j]);
 			zmm1 = _mm256_mul_ps(zmm1, zmm2); // A[][] * x[]
-			zmm1 = _mm256_mul_ps(zmm1, zmmalpha); // (A[][] * x[]) * alpha
-			zmm1 = _mm256_add_ps(zmm1, zmmbeta); // ((A[][] * x[]) * alpha) + beta
+			zmm1 = _mm256_mul_ps(zmm1, mmalpha); // (A[][] * x[]) * alpha
+			zmm1 = _mm256_add_ps(zmm1, mmbeta); // ((A[][] * x[]) * alpha) + beta
 			zmm3 = _mm256_add_ps(zmm3, zmm1);
 
 			// i + 1
 			zmm1 = _mm256_load_ps(&A[i + 1][j]);
 			zmm1 = _mm256_mul_ps(zmm1, zmm2);
-			zmm1 = _mm256_mul_ps(zmm1, zmmalpha);
-			zmm1 = _mm256_add_ps(zmm1, zmmbeta); 
+			zmm1 = _mm256_mul_ps(zmm1, mmalpha);
+			zmm1 = _mm256_add_ps(zmm1, mmbeta); 
 			zmm3i1 = _mm256_add_ps(zmm3i1, zmm1);
 
 			// i + 2
 			zmm1 = _mm256_load_ps(&A[i + 2][j]);
 			zmm1 = _mm256_mul_ps(zmm1, zmm2);
-			zmm1 = _mm256_mul_ps(zmm1, zmmalpha);
-			zmm1 = _mm256_add_ps(zmm1, zmmbeta);
+			zmm1 = _mm256_mul_ps(zmm1, mmalpha);
+			zmm1 = _mm256_add_ps(zmm1, mmbeta);
 			zmm3i2 = _mm256_add_ps(zmm3i2, zmm1);
 
 			// i + 3
 			zmm1 = _mm256_load_ps(&A[i + 3][j]);
 			zmm1 = _mm256_mul_ps(zmm1, zmm2);
-			zmm1 = _mm256_mul_ps(zmm1, zmmalpha);
-			zmm1 = _mm256_add_ps(zmm1, zmmbeta);
+			zmm1 = _mm256_mul_ps(zmm1, mmalpha);
+			zmm1 = _mm256_add_ps(zmm1, mmbeta);
 			zmm3i3 = _mm256_add_ps(zmm3i3, zmm1);
 
 			// i + 4
 			zmm1 = _mm256_load_ps(&A[i + 4][j]);
 			zmm1 = _mm256_mul_ps(zmm1, zmm2);
-			zmm1 = _mm256_mul_ps(zmm1, zmmalpha);
-			zmm1 = _mm256_add_ps(zmm1, zmmbeta);
+			zmm1 = _mm256_mul_ps(zmm1, mmalpha);
+			zmm1 = _mm256_add_ps(zmm1, mmbeta);
 			zmm3i4 = _mm256_add_ps(zmm3i4, zmm1);
 
 			// i + 5
 			zmm1 = _mm256_load_ps(&A[i + 5][j]);
 			zmm1 = _mm256_mul_ps(zmm1, zmm2);
-			zmm1 = _mm256_mul_ps(zmm1, zmmalpha);
-			zmm1 = _mm256_add_ps(zmm1, zmmbeta);
+			zmm1 = _mm256_mul_ps(zmm1, mmalpha);
+			zmm1 = _mm256_add_ps(zmm1, mmbeta);
 			zmm3i5 = _mm256_add_ps(zmm3i5, zmm1);
 
 			// i + 6
 			zmm1 = _mm256_load_ps(&A[i + 6][j]);
 			zmm1 = _mm256_mul_ps(zmm1, zmm2);
-			zmm1 = _mm256_mul_ps(zmm1, zmmalpha);
-			zmm1 = _mm256_add_ps(zmm1, zmmbeta);
+			zmm1 = _mm256_mul_ps(zmm1, mmalpha);
+			zmm1 = _mm256_add_ps(zmm1, mmbeta);
 			zmm3i6 = _mm256_add_ps(zmm3i6, zmm1);
 
 			// i + 7
 			zmm1 = _mm256_load_ps(&A[i + 7][j]);
 			zmm1 = _mm256_mul_ps(zmm1, zmm2);
-			zmm1 = _mm256_mul_ps(zmm1, zmmalpha);
-			zmm1 = _mm256_add_ps(zmm1, zmmbeta);
+			zmm1 = _mm256_mul_ps(zmm1, mmalpha);
+			zmm1 = _mm256_add_ps(zmm1, mmbeta);
 			zmm3i7 = _mm256_add_ps(zmm3i7, zmm1);
 		}
 
