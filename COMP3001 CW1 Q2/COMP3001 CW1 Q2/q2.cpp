@@ -117,7 +117,7 @@ void slow_routine(float alpha, float beta) {
 	
 	__m256 wmm0, wmm0i1, wmm0i2, wmm0i3, wmm0i4, wmm0i5, wmm0i6, wmm0i7, wmm1, wmm1i1, wmm1i2, wmm1i3, wmm1i4, wmm1i5, wmm1i6, wmm1i7, wmm2, wmm3, wmm4, wmm5, wmm6, wmm6i1, wmm6i2, wmm6i3, wmm6i4, wmm6i5, wmm6i6, wmm6i7, wmm7, wmm8, wmm9, wmmalpha;
 	wmmalpha = _mm256_set1_ps(alpha); // 8 copies of alpha
-	for (i = 0; i < N; i += 8) {
+	for (i = 0; i < (N/8)*8; i += 8) {
 		wmm0 = _mm256_set1_ps(u1[i]); // 8 copies of u1[i]
 		wmm1 = _mm256_set1_ps(u2[i]); // 8 copies of u2[i]	
 
@@ -228,6 +228,13 @@ void slow_routine(float alpha, float beta) {
 			// A[i][j] += alpha * u1[i] * v1[j] + u2[i] * v2[j];
 		}
 	}
+
+	// Padding code
+	for (i = (N / 8) * 8; i < N; i++) {
+		for (j = 0; j < N; j++) {
+			A[i][j] += alpha * u1[i] * v1[j] + u2[i] * v2[j];
+		}
+	}
 	
 
 	
@@ -237,7 +244,7 @@ void slow_routine(float alpha, float beta) {
 
 	for (j = 0; j < N; j++) {
 		xmm0 = _mm256_set1_ps(y[j]); // load 8 copies of y[]
-		for (i = 0; i < N; i+=64) {
+		for (i = 0; i < (N/64)*64; i+=64) {
 			xmm1 = _mm256_load_ps(&x[i]); // load 8 elements of x[]
 			xmm2 = _mm256_load_ps(&A[j][i]); // load 8 elements of A[j][]
 
@@ -307,6 +314,13 @@ void slow_routine(float alpha, float beta) {
 
 		}
 	}
+
+	// Padding code
+	for (i = 0; i < N; i++) {
+		for (j = (N / 64) * 64; j < N; j++) {
+			x[i] += A[j][i] * y[j] + beta;
+		}
+	}
 		
 
 
@@ -320,7 +334,7 @@ void slow_routine(float alpha, float beta) {
 	zmmalpha = _mm256_set1_ps(alpha); // 8 copies of alpha
 	zmmbeta = _mm256_set1_ps(beta); //8 copies of beta
 
-	for (i = 0; i < N; i+=8) {
+	for (i = 0; i < (N/8)*8; i+=8) {
 		
 
 		ymm3 = _mm256_load_ps(&z[i]); // load 8 elements of z[]
@@ -402,7 +416,7 @@ void slow_routine(float alpha, float beta) {
 		zmm0i7 = _mm256_set1_ps(w[i + 7]);
 		zmm3i7 = _mm256_setzero_ps();
 
-		for (j = 0; j < N; j += 8) {
+		for (j = 0; j < (N/8)*8; j += 8) {
 			zmm1 = _mm256_load_ps(&A[i][j]);
 			zmm2 = _mm256_load_ps(&x[j]);
 			zmm1 = _mm256_mul_ps(zmm1, zmm2); // A[][] * x[]
@@ -522,6 +536,15 @@ void slow_routine(float alpha, float beta) {
 		zmm3i7 = _mm256_hadd_ps(zmm3i7, zmm3i7);
 		total = _mm256_extractf128_ps(zmm3i7, 0);
 		_mm_store_ss(&w[i + 7], total);
+	}
+
+	// Padding code
+	for (i = (N / 8) * 8; i < N; i++) {
+		for (j = (N / 8) * 8; j < N; j++) {
+			x[i] += 3.22f * z[i];
+			w[i] += alpha * A[i][j] * x[j] + beta;
+
+		}
 	}
 		
 
