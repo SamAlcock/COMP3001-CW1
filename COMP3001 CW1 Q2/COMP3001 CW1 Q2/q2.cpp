@@ -51,8 +51,8 @@ int main() {
 		printf("\nCorrect Result\n");
 	else
 		printf("\nINcorrect Result\n");
-	float FLOPS = (12 * N * N + 2 * N);
-	printf("\n%f FLOPS achieved\n", FLOPS);
+	float FLOPS = 27.5f * N * N;
+	printf("\n%f FLOPS achieved \n", FLOPS/TIMES_TO_RUN);
 	system("pause"); //this command does not let the output window to close
 	
 	return 0; //normally, by returning zero, we mean that the program ended successfully. 
@@ -110,7 +110,18 @@ void initialize_again() {
 //you will optimize this routine
 void slow_routine(float alpha, float beta) {
 
-	// Optimisations applied - vectorisation, loop interchange, loop merge, register blocking
+	/*
+		Optimisations applied - vectorisation, loop interchange, loop merge, register blocking
+	
+		Initial time = 1815 msecs
+		Final time = 198.4 msecs
+
+		Initial FLOPS = 114690 / 1.815 seconds = 63,190.082644628 FLOPS = 61.709 kFLOPS (3dp)
+		Final FLOPS = 184549376 / 0.1984 seconds = 0.866 GFLOPS (3dp)
+
+		Final time measurements were run 10 times to get an average execution and FLOPS value
+
+	*/
 
 	unsigned int i, j;
 	__m256 mmalpha = _mm256_set1_ps(alpha);
@@ -227,6 +238,7 @@ void slow_routine(float alpha, float beta) {
 			_mm256_store_ps(&A[i + 7][j], wmm6i7);
 
 
+			
 			// A[i][j] += alpha * u1[i] * v1[j] + u2[i] * v2[j];
 		}
 	}
@@ -545,7 +557,6 @@ void slow_routine(float alpha, float beta) {
 			w[i] += alpha * A[i][j] * x[j] + beta;
 		}
 	}
-		
 
 }
 
