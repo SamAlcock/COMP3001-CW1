@@ -116,8 +116,8 @@ void slow_routine(float alpha, float beta) {
 		Initial time = 1815 msecs
 		Final time = 198.4 msecs
 
-		Initial FLOPS = 114690 / 1.815 seconds = 63,190.082644628 FLOPS = 61.709 kFLOPS (3dp)
-		Final FLOPS = 184549376 / 0.1984 seconds = 0.866 GFLOPS (3dp)
+		Initial FLOPS = 114690 FLOPS / 1.815 seconds = 63,190.082644628 FLOPS = 61.709 kFLOPS (3dp)
+		Final FLOPS = 184549376 FLOPS / 0.1984 seconds = 0.866 GFLOPS (3dp)
 
 		Final time measurements were run 10 times to get an average execution and FLOPS value
 
