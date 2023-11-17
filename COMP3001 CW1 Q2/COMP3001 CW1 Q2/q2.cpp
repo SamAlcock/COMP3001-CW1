@@ -143,7 +143,7 @@ void slow_routine(float alpha, float beta) {
 
 		wmm0i7 = _mm256_set1_ps(u1[i + 7]);
 		wmm1i7 = _mm256_set1_ps(u2[i + 7]);
-		for (j = 0; j < N; j += 8) {
+		for (j = 0; j < (N/8)*8; j += 8) {
 
 			wmm2 = _mm256_load_ps(&A[i][j]); // load 8 elements of A[i][]
 			wmm3 = _mm256_load_ps(&v1[j]); // load 8 elements of v1[]
@@ -313,28 +313,27 @@ void slow_routine(float alpha, float beta) {
 			_mm256_store_ps(&x[i + 48], xmm3i48);
 			_mm256_store_ps(&x[i + 56], xmm3i56);
 
+			
 
 		}
-	}
-
-	// Padding code
-	for (i = 0; i < N; i++) {
-		for (j = (N / 64) * 64; j < N; j++) {
+		// Padding code
+		for (i = (N / 64) * 64; i < N; i++) {
 			x[i] += A[j][i] * y[j] + beta;
 		}
+		
+		
 	}
+
+
 		
 
 
-	// Need to add loop for extra iterations (e.g., if N = 10 need to account for the 2 extra iterations)
+	
 	__m256 ymm0, ymm1, ymm2, ymm3;
-	ymm0 = _mm256_set1_ps(3.22f); // set num values
-
 	__m256 zmm0, zmm0i1, zmm0i2, zmm0i3, zmm0i4, zmm0i5, zmm0i6, zmm0i7, zmm1, zmm2, zmm3, zmm3i1, zmm3i2, zmm3i3, zmm3i4, zmm3i5, zmm3i6, zmm3i7;
 	__m128 total;
 
-
-
+	ymm0 = _mm256_set1_ps(3.22f); // set num values
 	for (i = 0; i < (N/8)*8; i+=8) {
 		
 
@@ -541,10 +540,9 @@ void slow_routine(float alpha, float beta) {
 
 	// Padding code
 	for (i = (N / 8) * 8; i < N; i++) {
-		for (j = (N / 8) * 8; j < N; j++) {
-			x[i] += 3.22f * z[i];
+		x[i] += 3.22f * z[i];
+		for (j = 0; j < N; j++) {
 			w[i] += alpha * A[i][j] * x[j] + beta;
-
 		}
 	}
 		
